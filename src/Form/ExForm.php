@@ -2,11 +2,10 @@
 
 namespace Drupal\ex_form\Form;
 
-use Drupal\Core\Form\FormBase;                   // Базовый класс Form API
-use Drupal\Core\Form\FormStateInterface;              // Класс отвечает за обработку данных
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Наследуемся от базового класса Form API
  *
  * @see \Drupal\Core\Form\FormBase
  */
@@ -82,7 +81,7 @@ class ExForm extends FormBase {
 
     $email = $form_state->getValue('email');
 
-    if(!valid_email($email)){
+    if (!valid_email($email)) {
       $form_state->setErrorByName('email', $this->t('Your email is incorrect. For example he must look so namemail@mail.com'));
     }
   }
@@ -93,10 +92,33 @@ class ExForm extends FormBase {
     $last_name = $form_state->getValue('last_name');
     $email = $form_state->getValue('email');
 
-    // Logs a notice
-    \Drupal::logger('my_module')->notice('Error submitting forms');
-    // Logs an error
-    \Drupal::logger('my_module')->error('Error submitting forms');
+    $url = "https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/".$email."/?hapikey=my____apy____key____hubspot";
+
+    $data = array(
+      'properties' => [
+        [
+          'property' => 'firstname',
+          'value' => $first_name
+        ],
+        [
+          'property' => 'lastname',
+          'value' => $last_name
+        ]
+      ]
+    );
+
+
+    $json = json_encode($data,true);
+
+    $response = \Drupal::httpClient()->post($url.'&_format=hal_json', [
+      'headers' => [
+        'Content-Type' => 'application/json'
+      ],
+      'body' => $json
+    ]);
+
+    //Send log
+    \Drupal::logger('ex_form')->info('The message to '. $email .' was success sender');
 
 
     drupal_set_message(t(
@@ -104,7 +126,7 @@ class ExForm extends FormBase {
       %last_name",
       [
         '%first_name' => $first_name,
-        '%last_name'=> $last_name,
+        '%last_name' => $last_name,
         '%email' => $email,
       ]));
 
